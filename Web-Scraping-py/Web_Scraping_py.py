@@ -1,17 +1,13 @@
 from bs4 import BeautifulSoup
 import urllib.request, urllib.parse, urllib.error
 import json
-import MySQLdb
 import mysql.connector
-from MySQLdb import _mysql
 from LinksReader import LinksReader
 from datetime import datetime
 
-print("Connecting to database...")
 # Data to connecto to DB
 HOST = "localhost"
 DATABASE = "web_scraper"
-TABLE = "product"
 USER = "root"
 PASSWORD = "root"
 
@@ -20,21 +16,22 @@ today = datetime.today().strftime("%Y-%m-%d")
 
 try:
     # Connection to DB
-    #conn = _mysql.connect(HOST, USER, PASSWORD, DATABASE)
+    print("Connecting to database...")
     conn = mysql.connector.connect(host = HOST, user = USER, password = PASSWORD, database = DATABASE)
     my_cursor = conn.cursor()
+    my_cursor.execute("SET GLOBAL time_zone = '+02:00'")
+    
     print("Connection succesful!")
 
     link_reader = LinksReader()
     link_list = link_reader.get_link_list()
-    #print(link_list)
     print("\n=========================================================================\n")
 
     # This code is for products of www.pccomponentes.com
     db_list = list()
 
     for link in link_list:
-        url = link
+        url = link.strip()
         print(url)
         # Open the URL as Browser, not as python urllib to avoid Forbidden errors
         page = urllib.request.Request(url,headers={'User-Agent': 'Chrome'}) 
@@ -72,15 +69,41 @@ try:
                 print("Not available")
 
             # Select query to check if already in table
-            select_query = f"SELECT url_product FROM {TABLE} WHERE url_product = \"{url}\""
+            select_query = f"SELECT url_product FROM product WHERE url_product = \"{url}\""
             my_cursor.execute(select_query)
 
             for link in my_cursor:
                 db_list.append(link[0]) # Each element in the cursor is a list
 
             if url not in db_list:
-                # Insert query
-                insert_query = f"INSERT INTO product VALUES (0, \"{name_product}\", \"{price_product}\", \"{today}\", \"{url}\", \"{available}\")"
+                # Insert query to product table
+                insert_query = f"INSERT INTO product VALUES (0, \"{name_product}\", \"{url}\")"
+                my_cursor.execute(insert_query)
+                conn.commit()
+
+                # Select query to get inserted product id into foreign key
+                select_query = f"SELECT id_product FROM product WHERE url_product = \"{url}\""
+                my_cursor.execute(select_query)
+                for e in my_cursor:
+                    foreign_key = e[0]
+                    print(e[0])
+                                
+                # Insert query to history table
+                insert_query = f"INSERT INTO history VALUES (0, {foreign_key}, \"{name_product}\", \"{price_product}\", \"{available}\", \"{today}\")"
+                my_cursor.execute(insert_query)
+                conn.commit()
+
+
+            else:
+                # Select query to get inserted product id into foreign key
+                select_query = f"SELECT id_product FROM product WHERE url_product = \"{url}\""
+                my_cursor.execute(select_query)
+                for e in my_cursor:
+                    foreign_key = e[0]
+                    print(e[0])
+                
+                # Insert query to history table
+                insert_query = f"INSERT INTO history VALUES (0, {foreign_key}, \"{name_product}\", \"{price_product}\", \"{available}\", \"{today}\")"
                 my_cursor.execute(insert_query)
                 conn.commit()
 
