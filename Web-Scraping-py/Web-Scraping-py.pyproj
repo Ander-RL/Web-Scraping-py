@@ -24,6 +24,9 @@
     <Compile Include="LinksReader.py">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="Db_Operations.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="Web_Scraping_py.py" />
   </ItemGroup>
   <ItemGroup>

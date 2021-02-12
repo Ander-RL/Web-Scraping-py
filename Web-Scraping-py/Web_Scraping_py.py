@@ -2,26 +2,14 @@ from bs4 import BeautifulSoup
 import urllib.request, urllib.parse, urllib.error
 import json
 import mysql.connector
+from Db_Operations import Db_Operations
 from LinksReader import LinksReader
-from datetime import datetime
 
-# Data to connecto to DB
-HOST = "localhost"
-DATABASE = "web_scraper"
-USER = "root"
-PASSWORD = "root"
-
-# Todays date
-today = datetime.today().strftime("%Y-%m-%d")
+db = Db_Operations()
 
 try:
     # Connection to DB
-    print("Connecting to database...")
-    conn = mysql.connector.connect(host = HOST, user = USER, password = PASSWORD, database = DATABASE)
-    my_cursor = conn.cursor()
-    my_cursor.execute("SET GLOBAL time_zone = '+02:00'")
-    
-    print("Connection succesful!")
+    db.Connect_to_db()
 
     link_reader = LinksReader()
     link_list = link_reader.get_link_list()
@@ -69,55 +57,39 @@ try:
                 print("Not available")
 
             # Select query to check if already in table
-            select_query = f"SELECT url_product FROM product WHERE url_product = \"{url}\""
-            my_cursor.execute(select_query)
+            link_list = db.Select_url(url)
 
-            for link in my_cursor:
-                db_list.append(link[0]) # Each element in the cursor is a list
+            for link in link_list:
+                db_list.append(link) # Each element in the cursor is a list
 
             if url not in db_list:
                 # Insert query to product table
-                insert_query = f"INSERT INTO product VALUES (0, \"{name_product}\", \"{url}\")"
-                my_cursor.execute(insert_query)
-                conn.commit()
+                db.Insert_product(name_product, url)
 
                 # Select query to get inserted product id into foreign key
-                select_query = f"SELECT id_product FROM product WHERE url_product = \"{url}\""
-                my_cursor.execute(select_query)
-                for e in my_cursor:
-                    foreign_key = e[0]
-                    print(e[0])
+                foreign_key = db.Select_fk(url)
                                 
                 # Insert query to history table
-                insert_query = f"INSERT INTO history VALUES (0, {foreign_key}, \"{name_product}\", \"{price_product}\", \"{available}\", \"{today}\")"
-                my_cursor.execute(insert_query)
-                conn.commit()
-
+                db.Insert_history(foreign_key, name_product, price_product, available)
 
             else:
                 # Select query to get inserted product id into foreign key
-                select_query = f"SELECT id_product FROM product WHERE url_product = \"{url}\""
-                my_cursor.execute(select_query)
-                for e in my_cursor:
-                    foreign_key = e[0]
-                    print(e[0])
-                
+                foreign_key = db.Select_fk(url)
+
                 # Insert query to history table
-                insert_query = f"INSERT INTO history VALUES (0, {foreign_key}, \"{name_product}\", \"{price_product}\", \"{available}\", \"{today}\")"
-                my_cursor.execute(insert_query)
-                conn.commit()
+                db.Insert_history(foreign_key, name_product, price_product, available)
 
         except Exception as e:
-                print(e)
+            print(e)
 
         print("\n=========================================================================\n")
 
     print("Connection to database closed.")
-    conn.close()
+    db.Disconnect_from_db()
 
 except Exception as e:
     print(e)
 
-# Insert codes for database connection into a function.
-# Insert each query lines into a function for each store.
 # Write function that allows user to choose store to scrap.
+# Create Scraper class.
+# Scrap Steam.
