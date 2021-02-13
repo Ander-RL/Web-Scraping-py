@@ -27,6 +27,9 @@
     <Compile Include="Db_Operations.py">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="Scraper.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="Web_Scraping_py.py" />
   </ItemGroup>
   <ItemGroup>
