@@ -14,7 +14,6 @@ try:
     link_list = link_reader.get_link_list()
     print("\n=========================================================================\n")
 
-    # This code is for products of www.pccomponentes.com
     db_list = list()
 
     for link in link_list:
@@ -67,7 +66,3 @@ except Exception as e:
 
 print("Connection to database closed.")
 db.Disconnect_from_db()
-
-# Write function that allows user to choose store to scrap.
-# Create Scraper class.
-# Scrap Steam.
